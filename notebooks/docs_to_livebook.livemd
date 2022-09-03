@@ -1,0 +1,95 @@
+# Untitled notebook
+
+```elixir
+Mix.install([{:docs_to_livebook, path: "#{__DIR__}/../"}])
+
+import IEx.Helpers
+```
+
+## Section
+
+```elixir
+h(DocsToLivebook) |> IO.inspect()
+```
+
+```elixir
+docs = Code.fetch_docs(DocsToLivebook)
+```
+
+```elixir
+{_, _, _, _, module_doc, _, list_of_docs} = docs
+```
+
+```elixir
+module_doc
+```
+
+```elixir
+list_of_docs
+```
+
+```elixir
+System.put_env("LIVEBOOK_DEFAULT_RUNTIME", "attached:play:COOKIE")
+
+System.get_env("LIVEBOOK_DEFAULT_RUNTIME")
+```
+
+````elixir
+"""
+# ModuleName
+
+```elixir
+Mix.install([{:docs_to_livebook, path: "\#\{\_\_DIR\_\_\}"}])
+```
+
+## Module Doc
+Documentation for livebook
+
+## Functions
+### hello/0
+
+Hello world.
+
+```elixir
+DocsToLivebook.hello()
+```
+"""
+````
+
+```elixir
+docs =
+  {:docs_v1, 2, :elixir, "text/markdown", %{"en" => "Documentation for `DocsToLivebook`.\n"}, %{},
+   [
+     {{:function, :hello, 0}, 6, ["hello()"],
+      %{"en" => "Hello world.\n\n## Examples\n\n    iex> DocsToLivebook.hello()\n    :world\n\n"},
+      %{}},
+     {{:function, :hello_world, 0}, 19, ["hello_world()"],
+      %{
+        "en" =>
+          "Hello world.\n\n## Examples\n\n    iex> DocsToLivebook.hello_world()\n    :world\n\n"
+      }, %{}}
+   ]}
+```
+
+```elixir
+string = """
+Example Function
+
+  ## Examples
+
+    iex> ExampleModule.hello()
+    :hello
+"""
+
+Regex.split(~r/iex\>[^\n]*/, string)
+```
+
+Example Function
+
+#### Examples
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+ExampleModule.hello()
+```
