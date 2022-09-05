@@ -13,7 +13,7 @@ defmodule ExBookTest do
 
     File.rm_rf("test_notebooks")
 
-    ExBook.app_to_exbook(:ex_book, path: @app_path)
+    ExBook.app_to_exbook(:ex_book, path: @app_path, ignore: [ExBook])
 
     assert File.read!(@app_path <> "ExampleModule.livemd") == example_doc()
 
@@ -25,6 +25,18 @@ defmodule ExBookTest do
 
     assert File.read!(@app_path <> "ExampleModule/SubExample3.livemd") ==
              example_doc("ExampleModule.SubExample3")
+
+    refute File.exists?(@app_path <> "ExBook.livemd")
+
+    # assert File.read!(@app_path <> "index.livemd") == """
+    #        ## ExBook
+
+    #        ### Modules
+    #        - [ExampleModule](./ExampleModule.livemd)
+    #        - [ExampleModule.SubExample1](./ExampleModule/SubExample1.livemd)
+    #        - [ExampleModule.SubExample2](./ExampleModule/SubExample2.livemd)
+    #        - [ExampleModule.SubExample3](./ExampleModule/SubExample3.livemd)
+    #        """
 
     File.rm_rf("test_notebooks")
   end

@@ -5,12 +5,17 @@ defmodule ExBook do
 
   def app_to_exbook(app, opts \\ []) do
     base_path = Keyword.get(opts, :path, "./")
+    ignored = Keyword.get(opts, :ignore, [])
     {:ok, modules} = :application.get_key(app, :modules)
 
     Enum.map(modules, fn module ->
       [_elixir | module_names] = Atom.to_string(module) |> String.split(".")
       module_name = Enum.join(module_names, "/")
       path = base_path <> module_name <> ".livemd"
+      {module, path}
+    end)
+    |> Enum.reject(fn {module, _path} -> module in ignored end)
+    |> Enum.each(fn {module, path} ->
       File.mkdir_p!(Path.dirname(path))
       File.write(path, module_to_livemd(module))
     end)
