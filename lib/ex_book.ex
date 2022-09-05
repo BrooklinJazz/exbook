@@ -8,17 +8,36 @@ defmodule ExBook do
     ignored = Keyword.get(opts, :ignore, [])
     {:ok, modules} = :application.get_key(app, :modules)
 
-    Enum.map(modules, fn module ->
-      [_elixir | module_names] = Atom.to_string(module) |> String.split(".")
-      module_name = Enum.join(module_names, "/")
-      path = base_path <> module_name <> ".livemd"
-      {module, path}
+    module_tuples =
+      Enum.map(modules, fn module ->
+        [_elixir | module_names] = Atom.to_string(module) |> String.split(".")
+        module_name = Enum.join(module_names, "/")
+        path = module_name <> ".livemd"
+        {module, path}
+      end)
+      |> Enum.reject(fn {module, _path} -> module in ignored end)
+
+    Enum.each(module_tuples, fn {module, path} ->
+      File.mkdir_p!(Path.dirname(base_path <> path))
+      File.write(base_path <> path, module_to_livemd(module))
     end)
-    |> Enum.reject(fn {module, _path} -> module in ignored end)
-    |> Enum.each(fn {module, path} ->
-      File.mkdir_p!(Path.dirname(path))
-      File.write(path, module_to_livemd(module))
-    end)
+
+    app_name =
+      Atom.to_string(app) |> String.split("_") |> Enum.map(&String.capitalize/1) |> Enum.join("")
+
+    module_links =
+      Enum.map(module_tuples, fn {module, path} ->
+        "Elixir." <> module_name = Atom.to_string(module)
+        "- [#{module_name}](./#{path})"
+      end)
+      |> Enum.join("\n")
+
+    File.write(base_path <> "index.livemd", """
+    # #{app_name}
+
+    ## Modules
+    #{module_links}
+    """)
   end
 
   def module_to_livemd(module) do
