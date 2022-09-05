@@ -1,12 +1,16 @@
 # Untitled notebook
 
 ```elixir
-Mix.install([{:docs_to_livebook, path: "#{__DIR__}/../"}])
+Mix.install([{:docs_to_livebook, path: "#{__DIR__}/../"}, {:ex_doc, "~> 0.28.5"}])
 
 import IEx.Helpers
 ```
 
 ## Section
+
+```elixir
+
+```
 
 ```elixir
 h(DocsToLivebook) |> IO.inspect()

@@ -48,7 +48,7 @@ defmodule DocsToLivebookTest do
   test "all_modules_to_livemd"
   test "write livemd to file"
 
-  test "doc_to_livebook/1" do
+  test "doc_to_livemd/1" do
     docs =
       {:docs_v1, 2, :elixir, "text/markdown", %{"en" => "Documentation for `DocsToLivebook`.\n"},
        %{},
@@ -71,11 +71,15 @@ defmodule DocsToLivebookTest do
 
     Hello world.
 
+    #### Examples
+
     ```elixir
     DocsToLivebook.hello()
     ```
+
     """
 
+    File.write!("new_livebook.livemd", DocsToLivebook.docs_to_livemd(docs))
     assert DocsToLivebook.docs_to_livemd(docs) == expected_output
   end
 end

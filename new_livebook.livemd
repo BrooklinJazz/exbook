@@ -1,15 +1,16 @@
 # ModuleName
 
 ## Module Doc
-
-Documentation for livebook
+Documentation for `DocsToLivebook`.
 
 ## Functions
-
 ### hello/0
 
 Hello world.
 
+#### Examples
+
 ```elixir
 DocsToLivebook.hello()
 ```
+

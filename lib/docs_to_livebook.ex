@@ -6,27 +6,28 @@ defmodule DocsToLivebook do
   def docs_to_livemd(docs) do
     {_, _, _, _, %{"en" => module_doc}, _, function_docs} = docs
 
-    Enum.map(function_docs, fn doc ->
-      {{:function, fn_name, arity}, line_number, _usage, %{"en" => doc_string}, _empty_map} = doc
+    functions =
+      Enum.map(function_docs, fn doc ->
+        {{:function, fn_name, arity}, line_number, _usage, %{"en" => doc_string}, _empty_map} =
+          doc
 
-      Regex.replace(~r/iex\> (.*)(.|\n)+?(?=(iex|$))/, doc_string, "```elixir\n\\1\n```")
-      #   # fn to_replace, group ->
-      #   #   """
-      #   #   ```elixir
-      #   #   #{group}
-      #   #   ```
-      #   #   """
-      |> IO.inspect()
-    end)
+        examples =
+          doc_string
+          |> String.replace(~r/iex\> (.*)(.|\n)+?(?=(iex|$))/, "```elixir\n\\1\n```")
+          |> String.replace("##", "####")
+          |> String.replace(~r/ {2,}/, "")
+
+        "### #{fn_name}/#{arity}\n\n" <> examples
+      end)
+      |> Enum.join("")
 
     """
     # ModuleName
 
     ## Module Doc
     #{module_doc}
-
     ## Functions
-
+    #{functions}
     """
   end
 
