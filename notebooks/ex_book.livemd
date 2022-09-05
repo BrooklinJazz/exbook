@@ -9,15 +9,19 @@ import IEx.Helpers
 ## Section
 
 ```elixir
+:application.get_key(:docs_to_livebook, :modules)
+```
+
+```elixir
 
 ```
 
 ```elixir
-h(DocsToLivebook) |> IO.inspect()
+h(ExBook) |> IO.inspect()
 ```
 
 ```elixir
-docs = Code.fetch_docs(DocsToLivebook)
+docs = Code.fetch_docs(ExBook)
 ```
 
 ```elixir
@@ -55,22 +59,20 @@ Documentation for livebook
 Hello world.
 
 ```elixir
-DocsToLivebook.hello()
+ExBook.hello()
 ```
 """
 ````
 
 ```elixir
 docs =
-  {:docs_v1, 2, :elixir, "text/markdown", %{"en" => "Documentation for `DocsToLivebook`.\n"}, %{},
+  {:docs_v1, 2, :elixir, "text/markdown", %{"en" => "Documentation for `ExBook`.\n"}, %{},
    [
      {{:function, :hello, 0}, 6, ["hello()"],
-      %{"en" => "Hello world.\n\n## Examples\n\n    iex> DocsToLivebook.hello()\n    :world\n\n"},
-      %{}},
+      %{"en" => "Hello world.\n\n## Examples\n\n    iex> ExBook.hello()\n    :world\n\n"}, %{}},
      {{:function, :hello_world, 0}, 19, ["hello_world()"],
       %{
-        "en" =>
-          "Hello world.\n\n## Examples\n\n    iex> DocsToLivebook.hello_world()\n    :world\n\n"
+        "en" => "Hello world.\n\n## Examples\n\n    iex> ExBook.hello_world()\n    :world\n\n"
       }, %{}}
    ]}
 ```

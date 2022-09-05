@@ -1,9 +1,29 @@
-defmodule DocsToLivebook do
+defmodule ExBook do
   @moduledoc """
-  Documentation for `DocsToLivebook`.
+  Documentation for `ExBook`.
   """
 
-  def docs_to_livemd(docs) do
+  def app_to_exbook(app, opts \\ []) do
+    base_path = Keyword.get(opts, :path, "./")
+    {:ok, modules} = :application.get_key(app, :modules)
+
+    Enum.map(modules, fn module ->
+      [_elixir | module_names] = Atom.to_string(module) |> String.split(".")
+      module_name = Enum.join(module_names, "/")
+      path = base_path <> module_name <> ".livemd"
+      File.mkdir_p!(Path.dirname(path))
+      File.write(path, module_to_livemd(module))
+    end)
+  end
+
+  def module_to_livemd(module) do
+    "Elixir." <> module_name = Atom.to_string(module)
+
+    Code.fetch_docs(ExampleModule)
+    |> docs_to_livemd(module_name)
+  end
+
+  def docs_to_livemd(docs, module_name) do
     {_, _, _, _, %{"en" => module_doc}, _, function_docs} = docs
 
     functions =
@@ -22,7 +42,7 @@ defmodule DocsToLivebook do
       |> Enum.join("")
 
     """
-    # ModuleName
+    # #{module_name}
 
     ## Module Doc
     #{module_doc}

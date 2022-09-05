@@ -1,4 +1,4 @@
-# DocsToLivebook
+# ExBook
 
 **TODO: Add description**
 

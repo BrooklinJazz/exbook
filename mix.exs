@@ -1,9 +1,9 @@
-defmodule DocsToLivebook.MixProject do
+defmodule ExBook.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :docs_to_livebook,
+      app: :ex_book,
       version: "0.1.0",
       elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,
