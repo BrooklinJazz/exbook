@@ -19,7 +19,7 @@ defmodule ExBook do
 
     Enum.each(module_tuples, fn {module, path} ->
       File.mkdir_p!(Path.dirname(base_path <> path))
-      File.write(base_path <> path, module_to_livemd(module))
+      File.write(base_path <> path, module_to_livemd(module, opts))
     end)
 
     app_name =
@@ -40,14 +40,15 @@ defmodule ExBook do
     """)
   end
 
-  def module_to_livemd(module) do
+  def module_to_livemd(module, opts \\ []) do
     "Elixir." <> module_name = Atom.to_string(module)
 
     Code.fetch_docs(ExampleModule)
-    |> docs_to_livemd(module_name)
+    |> docs_to_livemd(module_name, opts)
   end
 
-  def docs_to_livemd(docs, module_name) do
+  def docs_to_livemd(docs, module_name, opts \\ []) do
+    deps = Keyword.get(opts, :deps, nil)
     {_, _, _, _, %{"en" => module_doc}, _, function_docs} = docs
 
     functions =
@@ -65,29 +66,15 @@ defmodule ExBook do
       end)
       |> Enum.join("")
 
+    setup = if deps, do: "```elixir\nMix.install(#{inspect(deps)})\n```", else: ""
+
     """
     # #{module_name}
-
+    #{setup}
     ## Module Doc
     #{module_doc}
     ## Functions
     #{functions}
-    """
-  end
-
-  def module_to_livemd(module) do
-    "Elixir." <> module_name = Atom.to_string(module)
-
-    {_, _, _, module_doc, _, _, function_doc_list} = Code.fetch_docs(module) |> IO.inspect()
-
-    IO.inspect(module_doc)
-
-    """
-    # #{module_name}
-
-    ## Module Doc
-
-
     """
   end
 end

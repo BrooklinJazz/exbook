@@ -1,7 +1,0 @@
-# ExBook
-
-## Modules
-- [ExampleModule](./ExampleModule.livemd)
-- [ExampleModule.SubExample1](./ExampleModule/SubExample1.livemd)
-- [ExampleModule.SubExample2](./ExampleModule/SubExample2.livemd)
-- [ExampleModule.SubExample3](./ExampleModule/SubExample3.livemd)
