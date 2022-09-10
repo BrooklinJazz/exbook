@@ -1,8 +1,21 @@
 defmodule ExBook do
   @moduledoc """
-  Documentation for `ExBook`.
+  Documentation for `ExBook`
+  A tool to generate livebook documentation for your Elixir Projects.
   """
 
+  @doc """
+  Generate livebook docs for an Elixir app.
+
+  Takes an Elixir app and creates the .livemd files for the app modules
+  using the documentation.
+  Also generates an index.levemd links to the app module notebooks.
+
+  ## Opts
+  - :path - define the base path (defaults to "./")
+  - :ignore - Modules to ignore
+  """
+  @spec app_to_exbook(app :: atom(), opts :: [path: String.t(), ignore: list()]) :: :ok | {:error, any()}
   def app_to_exbook(app, opts \\ []) do
     base_path = Keyword.get(opts, :path, "./")
     ignored = Keyword.get(opts, :ignore, [])
@@ -43,26 +56,33 @@ defmodule ExBook do
   def module_to_livemd(module, opts \\ []) do
     "Elixir." <> module_name = Atom.to_string(module)
 
-    Code.fetch_docs(ExampleModule)
-    |> docs_to_livemd(module_name, opts)
+    case Code.fetch_docs(module) do
+      {_, _, _, _, :none, _, _} ->
+        {:error, :no_docs}
+
+      {_, _, _, _, %{"en" => _module_doc}, _, _function_docs} = docs ->
+        docs_to_livemd(docs, module_name, opts)
+    end
   end
 
   def docs_to_livemd(docs, module_name, opts \\ []) do
     deps = Keyword.get(opts, :deps, nil)
+
     {_, _, _, _, %{"en" => module_doc}, _, function_docs} = docs
 
     functions =
-      Enum.map(function_docs, fn doc ->
-        {{:function, fn_name, arity}, line_number, _usage, %{"en" => doc_string}, _empty_map} =
-          doc
+      Enum.map(function_docs, fn
+        {{:function, fn_name, arity}, _line_number, _usage, %{"en" => doc_string}, _empty_map} ->
+          examples =
+            doc_string
+            |> String.replace(~r/iex\> (.*)(.|\n)+?(?=(iex|$))/, "```elixir\n\\1\n```")
+            |> String.replace("##", "####")
+            |> String.replace(~r/ {2,}/, "")
 
-        examples =
-          doc_string
-          |> String.replace(~r/iex\> (.*)(.|\n)+?(?=(iex|$))/, "```elixir\n\\1\n```")
-          |> String.replace("##", "####")
-          |> String.replace(~r/ {2,}/, "")
+          "### #{fn_name}/#{arity}\n\n" <> examples
 
-        "### #{fn_name}/#{arity}\n\n" <> examples
+        {{:function, fn_name, arity}, _line_number, _usage, :none, _empty_map} ->
+          "### #{fn_name}/#{arity}\n\n"
       end)
       |> Enum.join("")
 
