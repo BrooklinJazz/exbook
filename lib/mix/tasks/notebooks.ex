@@ -8,11 +8,10 @@ defmodule Mix.Tasks.Notebooks do
         _ -> [path: "./notebooks", ignore: []]
       end
 
-    IO.inspect(File.ls!(), label: "FILES")
-    IO.inspect(opts, label: "OPTS")
+    Mix.Task.run("app.start")
+
 
     app = Mix.Project.config()[:app]
-    IO.inspect(app, label: "APP")
-    # ExBook.app_to_exbook(app, opts)
+    ExBook.app_to_exbook(app, opts)
   end
 end

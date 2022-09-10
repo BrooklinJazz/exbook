@@ -15,10 +15,12 @@ defmodule ExBook do
   - :path - define the base path (defaults to "./")
   - :ignore - Modules to ignore
   """
-  @spec app_to_exbook(app :: atom(), opts :: [path: String.t(), ignore: list()]) :: :ok | {:error, any()}
+  @spec app_to_exbook(app :: atom(), opts :: [path: String.t(), ignore: list()]) ::
+          :ok | {:error, any()}
   def app_to_exbook(app, opts \\ []) do
     base_path = Keyword.get(opts, :path, "./")
     ignored = Keyword.get(opts, :ignore, [])
+
     {:ok, modules} = :application.get_key(app, :modules)
 
     module_tuples =
@@ -31,8 +33,9 @@ defmodule ExBook do
       |> Enum.reject(fn {module, _path} -> module in ignored end)
 
     Enum.each(module_tuples, fn {module, path} ->
-      File.mkdir_p!(Path.dirname(base_path <> path))
-      File.write(base_path <> path, module_to_livemd(module, opts))
+      path = Path.join(base_path, path)
+      File.mkdir_p!(Path.dirname(path))
+      File.write(path, module_to_livemd(module, opts))
     end)
 
     app_name =
@@ -57,11 +60,11 @@ defmodule ExBook do
     "Elixir." <> module_name = Atom.to_string(module)
 
     case Code.fetch_docs(module) do
-      {_, _, _, _, :none, _, _} ->
-        {:error, :no_docs}
-
       {_, _, _, _, %{"en" => _module_doc}, _, _function_docs} = docs ->
         docs_to_livemd(docs, module_name, opts)
+
+      _ ->
+        {:error, :no_docs}
     end
   end
 

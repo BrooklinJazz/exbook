@@ -9,10 +9,9 @@ defmodule ExBookTest do
 
     ExBook.app_to_exbook(:ex_book,
       path: @app_path,
-      ignore: [ExBook, Notebooks],
+      ignore: [ExBook, Mix.Tasks.Notebooks],
       deps: [{:kino, "~> 0.6.2"}, {:ex_doc, path: "./"}]
     )
-
     setup = "```elixir\nMix.install([kino: \"~> 0.6.2\", ex_doc: [path: \"./\"]])\n```"
 
     assert File.read!(@app_path <> "ExampleModule.livemd") == example_doc("ExampleModule", setup)
@@ -38,7 +37,7 @@ defmodule ExBookTest do
            - [ExampleModule.SubExample3](./ExampleModule/SubExample3.livemd)
            """
 
-    File.rm_rf("test_notebooks")
+    # File.rm_rf("test_notebooks")
   end
 
   test "module to livemd/1" do
