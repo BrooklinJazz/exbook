@@ -87,6 +87,9 @@ defmodule ExBook do
 
         {{:function, fn_name, arity}, _line_number, _usage, :none, _empty_map} ->
           "### #{fn_name}/#{arity}\n\n"
+
+        _ ->
+          ""
       end)
       |> Enum.join("")
 

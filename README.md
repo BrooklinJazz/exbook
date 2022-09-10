@@ -22,3 +22,9 @@ Then run `mix deps.get` to install it.
 ``` elixir
 Exbook.module_to_livemd(YourModule)
 ```
+
+
+### TODO
+- modules without documentation, how do we want to handle them? currently we have them in the index, but don't generate a file for them
+- display macros?
+- display private functions?
