@@ -1,21 +1,24 @@
 # ExBook
 
-**TODO: Add description**
+ExBook is a tool to generate livebook notebook documentation for your Elixir projects.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `docs_to_livebook` to your list of dependencies in `mix.exs`:
+add ExBook to your dependencies in `mix.exs`
 
-```elixir
-def deps do
+``` elixir
+defp deps do
   [
-    {:docs_to_livebook, "~> 0.1.0"}
+    {:ExBook, git: "https://github.com/BrooklinJazz/exbook.git"}
   ]
-end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/docs_to_livebook>.
+Then run `mix deps.get` to install it.
 
+## Usage 
+
+### Specific Module
+
+``` elixir
+Exbook.module_to_livemd(YourModule)
+```

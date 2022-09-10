@@ -1,7 +1,6 @@
 defmodule ExBookTest do
   use ExUnit.Case
   doctest ExBook
-  import IEx.Helpers
 
   @app_path "./test_notebooks/"
 
@@ -10,7 +9,7 @@ defmodule ExBookTest do
 
     ExBook.app_to_exbook(:ex_book,
       path: @app_path,
-      ignore: [ExBook],
+      ignore: [ExBook, Notebooks],
       deps: [{:kino, "~> 0.6.2"}, {:ex_doc, path: "./"}]
     )
 
