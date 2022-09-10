@@ -48,7 +48,8 @@ defmodule ExBook do
       end)
       |> Enum.join("\n")
 
-    File.write(base_path <> "index.livemd", """
+    Path.join(base_path, "index.livemd")
+    |> File.write("""
     # #{app_name}
 
     ## Modules
