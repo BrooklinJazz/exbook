@@ -4,6 +4,9 @@ defmodule ExBook do
   A tool to generate livebook documentation for your Elixir Projects.
   """
 
+  @exbook_start_marker "--- ExBook ---"
+  @exbook_end_marker "---- ExBook ----"
+
   @doc """
   Generate livebook docs for an Elixir app.
 
@@ -21,40 +24,47 @@ defmodule ExBook do
     base_path = Keyword.get(opts, :path, "./")
     ignored = Keyword.get(opts, :ignore, [])
 
-    {:ok, modules} = :application.get_key(app, :modules)
+    app
+    |> get_modules(ignored)
+    |> create_or_edit_file(base_path, opts)
+    |> create_index(app, base_path)
+  end
 
-    module_tuples =
-      Enum.map(modules, fn module ->
-        [_elixir | module_names] = Atom.to_string(module) |> String.split(".")
-        module_name = Enum.join(module_names, "/")
-        path = module_name <> ".livemd"
-        {module, path}
-      end)
-      |> Enum.reject(fn {module, _path} -> module in ignored end)
-
+  defp create_or_edit_file(module_tuples, base_path, opts) do
     Enum.each(module_tuples, fn {module, path} ->
       path = Path.join(base_path, path)
       File.mkdir_p!(Path.dirname(path))
-      File.write(path, module_to_livemd(module, opts))
+
+      case File.exists?(path) do
+        false ->
+          File.write(path, module_to_livemd(module, opts))
+
+        true ->
+          docs = module_to_livemd(module, opts)
+          stream = File.stream!(path)
+          ex_doc_start = Enum.find_index(stream, &(&1 == @exbook_start_marker))
+          ex_doc_end = Enum.find_index(stream, &(&1 == @exbook_end_marker))
+
+          case {ex_doc_start, ex_doc_end} do
+            {nil, nil} ->
+              docs
+
+            # TODO
+            {doc_start, nil} ->
+              :noop
+
+            # TODO
+            {nil, doc_end} ->
+              :noop
+
+            {doc_start, doc_end} ->
+              # TODO add end of doc
+              Enum.slice(stream, 0..doc_start) <> docs
+          end
+      end
     end)
 
-    app_name =
-      Atom.to_string(app) |> String.split("_") |> Enum.map(&String.capitalize/1) |> Enum.join("")
-
-    module_links =
-      Enum.map(module_tuples, fn {module, path} ->
-        "Elixir." <> module_name = Atom.to_string(module)
-        "- [#{module_name}](./#{path})"
-      end)
-      |> Enum.join("\n")
-
-    Path.join(base_path, "index.livemd")
-    |> File.write("""
-    # #{app_name}
-
-    ## Modules
-    #{module_links}
-    """)
+    module_tuples
   end
 
   def module_to_livemd(module, opts \\ []) do
@@ -98,10 +108,55 @@ defmodule ExBook do
     """
     # #{module_name}
     #{setup}
+    #{@exbook_start_marker}
     ## Module Doc
     #{module_doc}
     ## Functions
     #{functions}
+    #{@exbook_end_marker}
     """
+  end
+
+  defp create_index(module_tuples, app, base_path) do
+    app_name = build_app_name(app)
+    module_links = build_module_links(module_tuples)
+
+    Path.join(base_path, "index.livemd")
+    |> File.write!("""
+    # #{app_name}
+
+    ## Modules
+    #{module_links}
+    """)
+  end
+
+  defp build_app_name(app) do
+    app
+    |> Atom.to_string()
+    |> String.split("_")
+    |> Enum.map(&String.capitalize/1)
+    |> Enum.join("")
+  end
+
+  defp build_module_links(module_tuples) do
+    Enum.map(module_tuples, fn {module, path} ->
+      "Elixir." <> module_name = Atom.to_string(module)
+      "- [#{module_name}](./#{path})"
+    end)
+    |> Enum.join("\n")
+  end
+
+  defp get_modules(app, ignored) do
+    {:ok, modules} = :application.get_key(app, :modules)
+
+    Enum.map(modules, fn module ->
+      [_elixir | module_names] = Atom.to_string(module) |> String.split(".")
+
+      module_name = Enum.join(module_names, "/")
+      path = module_name <> ".livemd"
+
+      {module, path}
+    end)
+    |> Enum.reject(fn {module, _path} -> module in ignored end)
   end
 end
