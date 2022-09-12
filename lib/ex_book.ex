@@ -4,8 +4,8 @@ defmodule ExBook do
   A tool to generate livebook documentation for your Elixir Projects.
   """
 
-  @exbook_start_marker "--- ExBook ---"
-  @exbook_end_marker "---- ExBook ----"
+  @exbook_start_marker "## ExBook"
+  @exbook_end_marker "`ExBook_end`"
 
   @doc """
   Generate livebook docs for an Elixir app.
@@ -28,43 +28,6 @@ defmodule ExBook do
     |> get_modules(ignored)
     |> create_or_edit_file(base_path, opts)
     |> create_index(app, base_path)
-  end
-
-  defp create_or_edit_file(module_tuples, base_path, opts) do
-    Enum.each(module_tuples, fn {module, path} ->
-      path = Path.join(base_path, path)
-      File.mkdir_p!(Path.dirname(path))
-
-      case File.exists?(path) do
-        false ->
-          File.write(path, module_to_livemd(module, opts))
-
-        true ->
-          docs = module_to_livemd(module, opts)
-          stream = File.stream!(path)
-          ex_doc_start = Enum.find_index(stream, &(&1 == @exbook_start_marker))
-          ex_doc_end = Enum.find_index(stream, &(&1 == @exbook_end_marker))
-
-          case {ex_doc_start, ex_doc_end} do
-            {nil, nil} ->
-              docs
-
-            # TODO
-            {doc_start, nil} ->
-              :noop
-
-            # TODO
-            {nil, doc_end} ->
-              :noop
-
-            {doc_start, doc_end} ->
-              # TODO add end of doc
-              Enum.slice(stream, 0..doc_start) <> docs
-          end
-      end
-    end)
-
-    module_tuples
   end
 
   def module_to_livemd(module, opts \\ []) do
@@ -105,29 +68,18 @@ defmodule ExBook do
 
     setup = if deps, do: "```elixir\nMix.install(#{inspect(deps)})\n```", else: ""
 
+    # LiveBook is smart enough to percolate the `module_name` to the top of the file
+    # However utilizing this in place of our own logic is not wise and should be resolved
     """
+    #{@exbook_start_marker}
     # #{module_name}
     #{setup}
-    #{@exbook_start_marker}
     ## Module Doc
     #{module_doc}
     ## Functions
     #{functions}
     #{@exbook_end_marker}
     """
-  end
-
-  defp create_index(module_tuples, app, base_path) do
-    app_name = build_app_name(app)
-    module_links = build_module_links(module_tuples)
-
-    Path.join(base_path, "index.livemd")
-    |> File.write!("""
-    # #{app_name}
-
-    ## Modules
-    #{module_links}
-    """)
   end
 
   defp build_app_name(app) do
@@ -144,6 +96,64 @@ defmodule ExBook do
       "- [#{module_name}](./#{path})"
     end)
     |> Enum.join("\n")
+  end
+
+  defp create_index(module_tuples, app, base_path) do
+    app_name = build_app_name(app)
+    module_links = build_module_links(module_tuples)
+
+    Path.join(base_path, "index.livemd")
+    |> File.write!("""
+    # #{app_name}
+
+    ## Modules
+    #{module_links}
+    """)
+  end
+
+  defp create_or_edit_file(module_tuples, base_path, opts) do
+    Enum.each(module_tuples, fn {module, path} ->
+      path = Path.join(base_path, path)
+      File.mkdir_p!(Path.dirname(path))
+
+      case File.exists?(path) do
+        false ->
+          File.write(path, module_to_livemd(module, opts))
+
+        true ->
+          docs = module_to_livemd(module, opts)
+          stream = File.stream!(path)
+          ex_doc_start = Enum.find_index(stream, &(&1 == "#{@exbook_start_marker}\n"))
+          ex_doc_end = Enum.find_index(stream, &(&1 == "#{@exbook_end_marker}\n"))
+
+          {:ok, updated_docs} =
+            case {ex_doc_start, ex_doc_end} do
+              {nil, nil} ->
+                # a decision has to be made here, putting it at the end may not be ideal
+                # however it's the least disruptive decision
+                {:ok, Enum.slice(stream, 0..-1) ++ [docs]}
+
+              # Failing hard in the error cases is acceptable for now,
+              # However a graceful return with more meaningful info is preferred
+              {_ex_doc_start, nil} ->
+                {:error, :corrupted_file}
+
+              {nil, _ex_doc_end} ->
+                {:error, :corrupted_file}
+
+              {ex_doc_start, ex_doc_end} ->
+                ex_doc_start = ex_doc_start - 1
+                ex_doc_end = ex_doc_end + 1
+                {:ok,
+                 Enum.slice(stream, 0..ex_doc_start) ++
+                   [docs] ++ Enum.slice(stream, ex_doc_end..-1)}
+            end
+
+          Stream.into(updated_docs, stream) |> Stream.run()
+      end
+    end)
+
+    module_tuples
   end
 
   defp get_modules(app, ignored) do
