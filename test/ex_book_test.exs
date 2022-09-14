@@ -3,6 +3,8 @@ defmodule ExBookTest do
   doctest ExBook
 
   @app_path "./test_notebooks/"
+  @doc_start "## ExBook"
+  @doc_end "`ExBook_end`"
 
   test "app_to_exbook/1 generate project livebooks" do
     File.rm_rf("test_notebooks")
@@ -12,6 +14,7 @@ defmodule ExBookTest do
       ignore: [ExBook, Mix.Tasks.Notebooks],
       deps: [{:kino, "~> 0.6.2"}, {:ex_doc, path: "./"}]
     )
+
     setup = "```elixir\nMix.install([kino: \"~> 0.6.2\", ex_doc: [path: \"./\"]])\n```"
 
     assert File.read!(@app_path <> "ExampleModule.livemd") == example_doc("ExampleModule", setup)
@@ -37,7 +40,123 @@ defmodule ExBookTest do
            - [ExampleModule.SubExample3](./ExampleModule/SubExample3.livemd)
            """
 
-    # File.rm_rf("test_notebooks")
+    File.rm_rf("test_notebooks")
+  end
+
+  test "app_to_exbook/1 only makes changes within ExBook tags in the file" do
+    File.rm_rf("test_notebooks")
+
+    updated_doc = """
+    ### Do not delete
+    #{@doc_start}
+    # ExampleModule
+    ```elixir
+    Mix.install([])
+    ```
+    ## Module Doc
+    Documentation for `ExampleModule`
+
+    ## Functions
+    ### hello/0
+
+    Example Function
+
+    #### Examples
+
+    ```elixir
+    ExampleModule.hello()
+    ```
+
+    #{@doc_end}
+    ### Do not delete
+    """
+
+    File.mkdir_p!(@app_path)
+
+    File.write!(@app_path <> "ExampleModule.livemd", """
+    ### Do not delete
+    #{@doc_start}
+    #{@doc_end}
+    ### Do not delete
+    """)
+
+    ExBook.app_to_exbook(:ex_book,
+      path: @app_path,
+      ignore: [ExBook, Mix.Tasks.Notebooks],
+      deps: []
+    )
+
+    assert File.read!(@app_path <> "ExampleModule.livemd") == updated_doc
+
+    File.rm_rf("test_notebooks")
+  end
+
+  test "app_to_exbook/1 appends when file exists but doesn't have exbook" do
+    File.rm_rf("test_notebooks")
+
+    updated_doc = """
+    ### Do not delete
+    #{@doc_start}
+    # ExampleModule
+    ```elixir
+    Mix.install([])
+    ```
+    ## Module Doc
+    Documentation for `ExampleModule`
+
+    ## Functions
+    ### hello/0
+
+    Example Function
+
+    #### Examples
+
+    ```elixir
+    ExampleModule.hello()
+    ```
+
+    #{@doc_end}
+    """
+
+    File.mkdir_p!(@app_path)
+
+    File.write!(@app_path <> "ExampleModule.livemd", """
+    ### Do not delete
+    """)
+
+    ExBook.app_to_exbook(:ex_book,
+      path: @app_path,
+      ignore: [ExBook, Mix.Tasks.Notebooks],
+      deps: []
+    )
+
+    assert File.read!(@app_path <> "ExampleModule.livemd") == updated_doc
+
+    File.rm_rf("test_notebooks")
+  end
+
+  test "app_to_exbook/1 fails when ExBook markers corrupted" do
+    File.rm_rf("test_notebooks")
+
+    File.mkdir_p!(@app_path)
+
+    File.write!(@app_path <> "ExampleModule.livemd", """
+    ### This once had ExBook
+
+    however something happened to the tags
+    #{@doc_start}
+
+    """)
+
+    assert_raise MatchError, fn ->
+      ExBook.app_to_exbook(:ex_book,
+        path: @app_path,
+        ignore: [ExBook, Mix.Tasks.Notebooks],
+        deps: []
+      )
+    end
+
+    File.rm_rf("test_notebooks")
   end
 
   test "module to livemd/1" do
@@ -52,6 +171,7 @@ defmodule ExBookTest do
 
   defp example_doc(module_name \\ "ExampleModule", setup \\ "") do
     """
+    #{@doc_start}
     # #{module_name}
     #{setup}
     ## Module Doc
@@ -68,6 +188,7 @@ defmodule ExBookTest do
     ExampleModule.hello()
     ```
 
+    #{@doc_end}
     """
   end
 end
