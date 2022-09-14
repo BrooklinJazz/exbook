@@ -14,4 +14,22 @@ defmodule ExampleModule.SubExample2 do
   def hello() do
     :hello
   end
+
+  @doc """
+  Block to test handling multiple doctests
+
+    ## Examples
+
+      iex> ExampleModule.parrot("goose")
+      "goose"
+
+      iex> ExampleModule.parrot("parrot")
+      "I'm Cicil"
+  """
+  def parrot(speak) do
+    case speak do
+      "parrot" -> "I'm Cicil"
+      speak -> speak
+    end
+  end
 end

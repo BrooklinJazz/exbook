@@ -46,31 +46,6 @@ defmodule ExBookTest do
   test "app_to_exbook/1 only makes changes within ExBook tags in the file" do
     File.rm_rf("test_notebooks")
 
-    updated_doc = """
-    ### Do not delete
-    #{@doc_start}
-    # ExampleModule
-    ```elixir
-    Mix.install([])
-    ```
-    ## Module Doc
-    Documentation for `ExampleModule`
-
-    ## Functions
-    ### hello/0
-
-    Example Function
-
-    #### Examples
-
-    ```elixir
-    ExampleModule.hello()
-    ```
-
-    #{@doc_end}
-    ### Do not delete
-    """
-
     File.mkdir_p!(@app_path)
 
     File.write!(@app_path <> "ExampleModule.livemd", """
@@ -86,7 +61,13 @@ defmodule ExBookTest do
       deps: []
     )
 
-    assert File.read!(@app_path <> "ExampleModule.livemd") == updated_doc
+    assert File.read!(@app_path <> "ExampleModule.livemd") != ExBook.module_to_livemd(ExampleModule)
+
+    stream = File.stream!(@app_path <> "ExampleModule.livemd")
+
+    assert Enum.at(stream, 0) == "### Do not delete\n"
+    assert Enum.at(stream, -1) == "### Do not delete\n"
+    assert Enum.at(stream, 2) == "# ExampleModule\n"
 
     File.rm_rf("test_notebooks")
   end
@@ -94,30 +75,6 @@ defmodule ExBookTest do
   test "app_to_exbook/1 appends when file exists but doesn't have exbook" do
     File.rm_rf("test_notebooks")
 
-    updated_doc = """
-    ### Do not delete
-    #{@doc_start}
-    # ExampleModule
-    ```elixir
-    Mix.install([])
-    ```
-    ## Module Doc
-    Documentation for `ExampleModule`
-
-    ## Functions
-    ### hello/0
-
-    Example Function
-
-    #### Examples
-
-    ```elixir
-    ExampleModule.hello()
-    ```
-
-    #{@doc_end}
-    """
-
     File.mkdir_p!(@app_path)
 
     File.write!(@app_path <> "ExampleModule.livemd", """
@@ -130,7 +87,12 @@ defmodule ExBookTest do
       deps: []
     )
 
-    assert File.read!(@app_path <> "ExampleModule.livemd") == updated_doc
+    assert File.read!(@app_path <> "ExampleModule.livemd") != ExBook.module_to_livemd(ExampleModule)
+
+    stream = File.stream!(@app_path <> "ExampleModule.livemd")
+
+    assert Enum.at(stream, 0) == "### Do not delete\n"
+    assert Enum.at(stream, -1) == "#{@doc_end}\n"
 
     File.rm_rf("test_notebooks")
   end
@@ -171,7 +133,7 @@ defmodule ExBookTest do
 
   defp example_doc(module_name \\ "ExampleModule", setup \\ "") do
     """
-    #{@doc_start}
+    ## ExBook
     # #{module_name}
     #{setup}
     ## Module Doc
@@ -187,6 +149,20 @@ defmodule ExBookTest do
     ```elixir
     ExampleModule.hello()
     ```
+
+    ### parrot/1
+
+    Block to test handling multiple doctests
+
+    #### Examples
+
+    ```elixir
+    ExampleModule.parrot(\"goose\")
+    ```
+    ```elixir
+    ExampleModule.parrot(\"parrot\")
+    ```
+
 
     #{@doc_end}
     """

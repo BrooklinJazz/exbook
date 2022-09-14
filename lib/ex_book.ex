@@ -52,7 +52,7 @@ defmodule ExBook do
         {{:function, fn_name, arity}, _line_number, _usage, %{"en" => doc_string}, _empty_map} ->
           examples =
             doc_string
-            |> String.replace(~r/iex\> (.*)(.|\n)+?(?=(iex|$))/, "```elixir\n\\1\n```")
+            |> String.replace(~r/iex\> (.*)(.|\n)+?(?=(iex|$))/, "```elixir\n\\1\n```\n")
             |> String.replace("##", "####")
             |> String.replace(~r/ {2,}/, "")
 
@@ -144,6 +144,7 @@ defmodule ExBook do
               {ex_doc_start, ex_doc_end} ->
                 ex_doc_start = ex_doc_start - 1
                 ex_doc_end = ex_doc_end + 1
+
                 {:ok,
                  Enum.slice(stream, 0..ex_doc_start) ++
                    [docs] ++ Enum.slice(stream, ex_doc_end..-1)}
