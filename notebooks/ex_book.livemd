@@ -99,3 +99,19 @@ Example Function
 ```elixir
 ExampleModule.hello()
 ```
+
+<!-- livebook:{"break_markdown":true} -->
+
+`#ExBook_start`
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+#Exbook_start
+```
+
+---ExBook---
+
+--- ExBook ---
+
+---- ExBook ----
