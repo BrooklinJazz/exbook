@@ -28,3 +28,5 @@ Exbook.module_to_livemd(YourModule)
 - modules without documentation, how do we want to handle them? currently we have them in the index, but don't generate a file for them
 - display macros?
 - display private functions?
+- Set notebook title if none exists
+- Figure out best way to create sections so that larger docs are more navigable
