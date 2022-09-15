@@ -30,3 +30,4 @@ Exbook.module_to_livemd(YourModule)
 - display private functions?
 - Set notebook title if none exists
 - Figure out best way to create sections so that larger docs are more navigable
+- What to do when there's no docs to publish to the file, currently not created
