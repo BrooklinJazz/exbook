@@ -25,6 +25,7 @@ Exbook.module_to_livemd(YourModule)
 
 
 ### TODO
+- *Important* large module to docs have issues, need to lean on stream write to make this more manageable.
 - modules without documentation, how do we want to handle them? currently we have them in the index, but don't generate a file for them
 - display macros?
 - display private functions?
