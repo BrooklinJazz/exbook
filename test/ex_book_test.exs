@@ -121,6 +121,44 @@ defmodule ExBookTest do
     File.rm_rf("test_notebooks")
   end
 
+  test "app_to_exbook/1 cleans up erroneous additional ExBook sections if any found" do
+    File.rm_rf("test_notebooks")
+
+    File.mkdir_p!(@app_path)
+
+    File.write!(@app_path <> "ExampleModule.livemd", """
+    ### Do not delete
+    #{@doc_start}
+    #{@doc_end}
+    ### Also important
+    #{@doc_start}
+    somehow we have duplicates
+    #{@doc_end}
+    ### more things
+    #{@doc_start}
+    more duplicates
+    #{@doc_end}
+    ### Do not delete
+    """)
+
+    ExBook.app_to_exbook(:ex_book,
+      path: @app_path,
+      ignore: [ExBook, Mix.Tasks.Notebooks],
+      deps: []
+    )
+
+    assert File.read!(@app_path <> "ExampleModule.livemd") != ExBook.module_to_livemd(ExampleModule)
+
+    stream = File.stream!(@app_path <> "ExampleModule.livemd")
+
+    assert Enum.at(stream, 0) == "### Do not delete\n"
+    assert Enum.at(stream, -1) == "### Do not delete\n"
+    assert Enum.filter(stream, &(&1 == "#{@doc_start}\n")) == ["#{@doc_start}\n"]
+    assert Enum.filter(stream, &(&1 == "#{@doc_end}\n")) == ["#{@doc_end}\n"]
+
+    File.rm_rf("test_notebooks")
+  end
+
   test "module to livemd/1" do
     assert ExBook.module_to_livemd(ExampleModule) == example_doc()
   end
