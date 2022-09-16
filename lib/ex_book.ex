@@ -123,11 +123,11 @@ defmodule ExBook do
         true ->
           docs = module_to_livemd(module, opts)
           stream = File.stream!(path)
-          ex_doc_start = Enum.find_index(stream, &(&1 == "#{@exbook_start_marker}\n"))
-          ex_doc_end = Enum.find_index(stream, &(&1 == "#{@exbook_end_marker}\n"))
+          exbook_start = Enum.find_index(stream, &(&1 == "#{@exbook_start_marker}\n"))
+          exbook_end = Enum.find_index(stream, &(&1 == "#{@exbook_end_marker}\n"))
 
           {:ok, updated_docs} =
-            case {ex_doc_start, ex_doc_end} do
+            case {exbook_start, exbook_end} do
               {nil, nil} ->
                 # a decision has to be made here, putting it at the end may not be ideal
                 # however it's the least disruptive decision
@@ -141,13 +141,17 @@ defmodule ExBook do
               {nil, _ex_doc_end} ->
                 {:error, :corrupted_file}
 
-              {ex_doc_start, ex_doc_end} ->
-                ex_doc_start = ex_doc_start - 1
-                ex_doc_end = ex_doc_end + 1
+              {exbook_start, exbook_end} ->
+                exbook_start = exbook_start - 1
+                exbook_end = exbook_end + 1
 
-                {:ok,
-                 Enum.slice(stream, 0..ex_doc_start) ++
-                   [docs] ++ Enum.slice(stream, ex_doc_end..-1)}
+                preamble = Enum.slice(stream, 0..exbook_start)
+
+                exbook_and_postscript =
+                  Enum.slice(stream, exbook_end..-1)
+                  |> clean_file(docs)
+
+                {:ok, preamble ++ exbook_and_postscript}
             end
 
           Stream.into(updated_docs, stream) |> Stream.run()
@@ -155,6 +159,29 @@ defmodule ExBook do
     end)
 
     module_tuples
+  end
+
+  # TODO refactor:
+  # Not in love with this, there's a better way I'm sure but can't think of one right now.
+  defp clean_file(stream, docs) do
+    open = Enum.find_index(stream, &(&1 == "#{@exbook_start_marker}\n"))
+    close = Enum.find_index(stream, &(&1 == "#{@exbook_end_marker}\n"))
+
+    case {open, close} do
+      {nil, nil} ->
+        List.flatten([docs] ++ stream)
+
+      {_open, nil} ->
+        {:error, :corrupted_file}
+
+      {nil, _close} ->
+        {:error, :corrupted_file}
+
+      {open, close} ->
+        open = open - 1
+        close = close + 1
+        (Enum.slice(stream, 0..open) ++ Enum.slice(stream, close..-1)) |> clean_file(docs)
+    end
   end
 
   defp get_modules(app, ignored) do
